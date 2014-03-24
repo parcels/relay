@@ -25,11 +25,12 @@ soap.createClient wsdl, (err, client) ->
       client.GetOperationHistory message, (err, result) ->
         if err
           console.error err
-          res.send 500
+          res.json 500, error: err
         else if result
           res.json result
         else
           res.send 404
+      , timeout: 4000
 
     fetchUSPS = (req, res) ->
       query = 
