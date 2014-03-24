@@ -59,8 +59,8 @@
           }
         });
       };
-      app.get('/parcels/russianpost/:barcode', fetchRussianPost);
-      app.get('/parcels/usps/:barcode', fetchUSPS);
+      app.get('/russianpost/:barcode', fetchRussianPost);
+      app.get('/usps/:barcode', fetchUSPS);
       port = process.env.PORT || 3000;
       app.listen(port);
       return console.log("[INFO] Listening on port " + port);

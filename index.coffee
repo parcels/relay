@@ -46,8 +46,8 @@ soap.createClient wsdl, (err, client) ->
         else
           res.json xml2js.toJson(body, object: true)
 
-    app.get '/parcels/russianpost/:barcode', fetchRussianPost
-    app.get '/parcels/usps/:barcode', fetchUSPS
+    app.get '/russianpost/:barcode', fetchRussianPost
+    app.get '/usps/:barcode', fetchUSPS
 
     port = process.env.PORT || 3000
 
