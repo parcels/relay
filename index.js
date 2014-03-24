@@ -36,12 +36,16 @@
         return client.GetOperationHistory(message, function(err, result) {
           if (err) {
             console.error(err);
-            return res.send(500);
+            return res.json(500, {
+              error: err
+            });
           } else if (result) {
             return res.json(result);
           } else {
             return res.send(404);
           }
+        }, {
+          timeout: 4000
         });
       };
       fetchUSPS = function(req, res) {
