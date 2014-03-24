@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Published by JAX-WS RI at http://jax-ws.dev.java.net. RI's version is JAX-WS RI 2.2.8 svn-revision#13980. -->
-<definitions name="OperationHistory" targetNamespace="http://russianpost.org/operationhistory" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:espp="http://www.russianpost.org/RTM/DataExchangeESPP/Data" xmlns:msg="http://russianpost.org/operationhistory/data" xmlns:sms="http://russianpost.org/sms-info/data" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://russianpost.org/operationhistory" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--Published by JAX-WS RI at http://jax-ws.dev.java.net. RI's version is JAX-WS RI 2.2.8 svn-revision#13980.--><definitions name="OperationHistory" targetNamespace="http://russianpost.org/operationhistory" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:espp="http://www.russianpost.org/RTM/DataExchangeESPP/Data" xmlns:msg="http://russianpost.org/operationhistory/data" xmlns:sms="http://russianpost.org/sms-info/data" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://russianpost.org/operationhistory" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <types>
     <xsd:schema targetNamespace="http://russianpost.org/operationhistory">
-      <xsd:import namespace="http://www.russianpost.org/RTM/DataExchangeESPP/Data" schemaLocation="http://voh.russianpost.ru:8080/niips-operationhistory-web/OperationHistory?xsd=1"/>
-      <xsd:import namespace="http://russianpost.org/operationhistory/data" schemaLocation="operation_history.xml"/>
-      <xsd:import namespace="http://russianpost.org/sms-info/data" schemaLocation="sms_info.xml"/>
+      <xsd:import namespace="http://www.russianpost.org/RTM/DataExchangeESPP/Data" schemaLocation="OperationHistory.xsd"/>
+      <xsd:import namespace="http://russianpost.org/operationhistory/data" schemaLocation="OperationHistory_1.xsd"/>
+      <xsd:import namespace="http://russianpost.org/sms-info/data" schemaLocation="OperationHistory_1_2_3.xsd"/>
     </xsd:schema>
   </types>
   <message name="getOperationHistoryIn">
@@ -83,13 +82,13 @@
       <fault message="tns:LanguageFault" name="LanguageFault"/>
     </operation>
     <operation name="PostalOrderEventsForMail">
-      <documentation>Метод получения данных о наложенном платеже. </documentation>
+      <documentation>Метод получения данных о наложенном платеже.</documentation>
       <input message="tns:PostalOrderEventsForMailInput" name="Request"/>
       <output message="tns:PostalOrderEventsForMaiOutput" name="Response"/>
       <fault message="tns:PostalOrderEventsForMailFault" name="Fault"/>
     </operation>
     <operation name="getSmsHistory">
-      <documentation>Метод получения данных о переданных по отправлению СМС. </documentation>
+      <documentation>Метод получения данных о переданных по отправлению СМС.</documentation>
       <input message="tns:getSmsHistoryRequest"/>
       <output message="tns:getSmsHistoryResponse"/>
       <fault message="tns:SmsHistoryFault" name="SmsHistoryFault"/>
