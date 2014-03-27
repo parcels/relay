@@ -4,7 +4,7 @@ logger = require 'winston'
 non    = require 'nested-or-nothing'
 soap   = require 'soap'
 
-{compact} = _
+{compact, partial} = _
 
 # Russian Post SOAP client
 wsdl = './lib/russianpost/wsdl/russianpost_1.wsdl'
@@ -22,14 +22,16 @@ fetch = (trackId) ->
 
 normalize = (response) ->
   response.historyRecord.map (operation) ->
-    operType = non operation, 'OperationParameters', 'OperType', 'Name'
-    operAttr = non operation, 'OperationParameters', 'OperAttr', 'Name'
+    path = partial non, operation
 
-    trackId:  non operation, 'ItemParameters', 'Barcode'
-    time:     non operation, 'OperationParameters', 'OperDate'
-    zip:      non operation, 'AddressParameters', 'OperationAddress', 'Index'
-    location: non operation, 'AddressParameters', 'OperationAddress', 'Description'
-    message:  compact([operType, operAttr]).join ': '
+    operType = path 'OperationParameters', 'OperType', 'Name'
+    operAttr = path 'OperationParameters', 'OperAttr', 'Name'
+
+    trackId:   path 'ItemParameters', 'Barcode'
+    time:      path 'OperationParameters', 'OperDate'
+    zip:       path 'AddressParameters', 'OperationAddress', 'Index'
+    location:  path 'AddressParameters', 'OperationAddress', 'Description'
+    message:   compact([operType, operAttr]).join ': '
 
 fetchNormalized = (trackId) ->
   fetch(trackId).then normalize
