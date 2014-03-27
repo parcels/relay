@@ -7,50 +7,56 @@ app = express()
 app.use express.compress()
 
 soap    = require 'soap'
-_       = require 'underscore'
-request = require 'request'
+Q       = require 'q'
+http    = require 'q-io/http'
 xml2js  = require 'xml2json'
 
-wsdl  = './lib/russianpost/wsdl/russianpost_1.wsdl'
 
-soap.createClient wsdl, (err, client) ->
-  if err
+fetchRussianPost = (client) -> (req, res) ->
+  message =
+    Barcode: req.params.barcode
+    MessageType: 0
+
+  Q.nfcall client.GetOperationHistory, message
+    .then (result) ->
+      if result then res.json result
+      else res.send 404
+    .catch (err) ->
+      console.error err
+      res.json 500, error: err
+
+
+fetchUSPS = (req, res) ->
+  query =
+    "<TrackFieldRequest USERID=\"#{process.env.USPS_USER_ID}\">
+      <TrackID ID=\"#{req.params.barcode}\"></TrackID>
+    </TrackFieldRequest>"
+
+  url = "http://production.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=#{query}"
+
+  http.request url
+    .then (response) ->
+      response.body.read()
+    .then (body) ->
+      res.json xml2js.toJson(body, object: true)
+    .catch (err) ->
+      console.log err
+      res.send 500, error: err
+
+
+wsdl = './lib/russianpost/wsdl/russianpost_1.wsdl'
+Q.nfcall soap.createClient, wsdl
+  .then (client) ->
+    app.get '/russianpost/:barcode', fetchRussianPost(client)
+    console.log '[INFO] RussianPost client established'
+  .catch (err) ->
     console.error err
-  else
-    fetchRussianPost = (req, res) ->
-      message =
-        Barcode: req.params.barcode
-        MessageType: 0
+  .done()
 
-      client.GetOperationHistory message, (err, result) ->
-        if err
-          console.error err
-          res.json 500, error: err
-        else if result
-          res.json result
-        else
-          res.send 404
-      , timeout: 4000
+app.get '/usps/:barcode', fetchUSPS
+console.log '[INFO] USPS client established'
 
-    fetchUSPS = (req, res) ->
-      query = 
-        "<TrackFieldRequest USERID=\"#{process.env.USPS_USER_ID}\">
-          <TrackID ID=\"#{req.params.barcode}\"></TrackID>
-        </TrackFieldRequest>"
+port = process.env.PORT || 3000
 
-      url = "http://production.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=#{query}"
-
-      request url, (err, response, body) ->
-        if err
-          console.log err
-          res.send 500
-        else
-          res.json xml2js.toJson(body, object: true)
-
-    app.get '/russianpost/:barcode', fetchRussianPost
-    app.get '/usps/:barcode', fetchUSPS
-
-    port = process.env.PORT || 3000
-
-    app.listen port
-    console.log "[INFO] Listening on port #{port}"
+app.listen port
+console.log "[INFO] Listening on port #{port}"
