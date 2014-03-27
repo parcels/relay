@@ -26,6 +26,11 @@
     "xml2json": "^0.4.0",
     "q": "^1.0.1",
     "q-io": "^1.11.0",
-    "winston": "^0.7.3"
+    "winston": "^0.7.3",
+    "underscore": "^1.6.0",
+    "ironmq": "^0.1.4",
+    "rethinkdb": "^1.12.0-0",
+    "nested-or-nothing": "^0.1.1",
+    "moment": "^2.5.1"
   }
 }
