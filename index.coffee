@@ -1,8 +1,10 @@
 Q       = require 'q'
+_       = require 'underscore'
 dotenv  = require 'dotenv'
 express = require 'express'
 http    = require 'q-io/http'
 logger  = require 'winston'
+moment  = require 'moment'
 non     = require 'nested-or-nothing'
 r       = require 'rethinkdb'
 soap    = require 'soap'
@@ -43,7 +45,7 @@ RussianPost =
       time:     non operation, 'OperationParameters', 'OperDate'
       zip:      non operation, 'AddressParameters', 'OperationAddress', 'Index'
       location: non operation, 'AddressParameters', 'OperationAddress', 'Description'
-      message:  if operAttr? then [operType, operAttr].join ': ' else operType
+      message:  _.compact([operType, operAttr]).join ': '
 
 
 
@@ -57,15 +59,33 @@ USPS =
           ID: trackId
     http.request url + xml2js.toXml(message)
       .then (response) -> response.body.read()
-      .then (body) -> Q xml2js.toJson(body, object: true)
+      .then (body) -> Q xml2js.toJson(body, object: true, sanitize: false)
+
+  normalize: (response) ->
+    e2n = emptyObjectToNull = (val) ->
+      if _.isObject(val) and _.isEmpty(val) then null
+      else val
+
+    trackId = non response, 'TrackResponse', 'TrackInfo', 'ID'
+
+    (response.TrackResponse.TrackInfo.TrackDetail or []).map (operation) ->
+      {EventDate, EventTime, EventCity, EventState, EventCountry, EventZIPCode} = operation
+
+      trackId:  trackId
+      time:     moment(_.compact([e2n EventDate, e2n EventTime]).join ' ').format()
+      location: _.compact([e2n(EventCity), e2n(EventState), e2n(EventCountry)]).join ', '
+      zip:      if e2n(EventZIPCode) then "#{EventZIPCode}" else undefined
+      message:  e2n operation.Event
+
+
 
 
 # Universal responder
 # Unwraps a promise and renders the result
-respond = (fn) -> (req, res) ->
-  fn(req.params.trackId)
+respond = (fetchFn, normalizeFn) -> (req, res) ->
+  fetchFn(req.params.trackId)
     .then (result) ->
-      if result then res.json result
+      if result then res.json normalizeFn(result)
       else res.send 404
     .catch (err) ->
       logger.error err
@@ -77,8 +97,8 @@ respond = (fn) -> (req, res) ->
 app = express()
 app.use express.compress()
 
-app.get '/russianpost/:trackId', respond(RussianPost.fetch)
-app.get '/usps/:trackId', respond(USPS.fetch)
+app.get '/russianpost/:trackId', respond(RussianPost.fetch, RussianPost.normalize)
+app.get '/usps/:trackId', respond(USPS.fetch, USPS.normalize)
 
 port = process.env.PORT || 3000
 app.listen port
