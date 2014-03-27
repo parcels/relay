@@ -5,6 +5,8 @@ moment = require 'moment'
 non    = require 'nested-or-nothing'
 x2j    = require 'xml2json'
 
+{object, map, pairs, isEmpty, compact} = _
+
 userId = process.env.USPS_USER_ID
 url = 'http://production.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML='
 
@@ -23,13 +25,13 @@ normalize = (response) ->
   trackInfo = non(response, 'TrackResponse', 'TrackInfo') or {}
 
   (trackInfo.TrackDetail or []).map (operation) ->
-    e = _.object _.map _.pairs(operation), (pair) ->
+    e = object map pairs(operation), (pair) ->
       [k, v] = pair
-      [ k.slice(5) or k, if _.isEmpty v then '' else v]
+      [k.slice(5) or k, if isEmpty v then '' else v]
 
     trackId:  trackInfo.ID
     time:     moment("#{e.Date} #{e.Time}").format()
-    location: _.compact([e.City, e.State, e.Country]).join ', '
+    location: compact([e.City, e.State, e.Country]).join ', '
     zip:      e.ZIPCode
     message:  e.Event
 
