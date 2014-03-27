@@ -11,19 +11,19 @@ dotenv.load()
 
 # Russian Post SOAP client
 wsdl = './lib/russianpost/wsdl/russianpost_1.wsdl'
-createSoapClient =
-  Q.nfcall soap.createClient, wsdl
-    .catch (err) -> logger.error err
+russianPostClient = Q.nfcall soap.createClient, wsdl
+  .catch (err) -> logger.error err
 
 
 # Fetchers
 # Send requests to APIs and return JS objects wrapped in promises
 
-fetchRussianPost = (client) -> (trackId) ->
+fetchRussianPost = (trackId) ->
   message =
     Barcode: trackId
     MessageType: 0
-  Q.nfcall client.GetOperationHistory, message
+  russianPostClient.then (client) ->
+    Q.nfcall client.GetOperationHistory, message
 
 fetchUSPS = (trackId) ->
   url = "http://production.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML="
@@ -54,12 +54,8 @@ respond = (fn) -> (req, res) ->
 app = express()
 app.use express.compress()
 
-createSoapClient.done (client) ->
-  app.get '/russianpost/:trackId', respond(fetchRussianPost client)
-  logger.info 'RussianPost client established'
-
+app.get '/russianpost/:trackId', respond(fetchRussianPost)
 app.get '/usps/:trackId', respond(fetchUSPS)
-logger.info 'USPS client established'
 
 port = process.env.PORT || 3000
 app.listen port
