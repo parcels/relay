@@ -4,6 +4,7 @@ http    = require 'q-io/http'
 xml2js  = require 'xml2json'
 express = require 'express'
 logger  = require 'winston'
+r       = require 'rethinkdb'
 dotenv  = require 'dotenv'
 
 # Load environment variables in development
@@ -12,6 +13,14 @@ dotenv.load()
 # Russian Post SOAP client
 wsdl = './lib/russianpost/wsdl/russianpost_1.wsdl'
 russianPostClient = Q.nfcall soap.createClient, wsdl
+  .catch (err) -> logger.error err
+
+# RethinkDB connection
+rethinkDBOpts =
+  host: process.env.RETHINKDB_HOST or 'localhost'
+  port: process.env.RETHINKDB_PORT or 28015
+  db:   process.env.RETHINKDB_DB   or 'parcels'
+db = Q.nfcall r.connect, rethinkDBOpts
   .catch (err) -> logger.error err
 
 
