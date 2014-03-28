@@ -8,8 +8,9 @@ express = require 'express'
 logger  = require 'winston'
 r       = require 'rethinkdb'
 
-RussianPost = require './lib/russianpost'
-USPS = require './lib/usps'
+carriers =
+  russianpost: require './lib/russianpost'
+  usps: require './lib/usps'
 
 # RethinkDB connection
 rethinkDBOpts =
@@ -21,8 +22,9 @@ db = Q.nfcall r.connect, rethinkDBOpts
 
 # Universal responder
 # Unwraps a promise and renders the result
-respond = (fn) -> (req, res) ->
-  fn(req.params.trackId)
+respond = (req, res) ->
+  {carrier, trackId} = req.params
+  carriers[carrier].fetchNormalized(trackId)
     .then (result) ->
       if result then res.json(result)
       else res.send 404
@@ -36,8 +38,7 @@ respond = (fn) -> (req, res) ->
 app = express()
 app.use express.compress()
 
-app.get '/russianpost/:trackId', respond(RussianPost.fetchNormalized)
-app.get '/usps/:trackId', respond(USPS.fetchNormalized)
+app.get '/:carrier/:trackId', respond
 
 port = process.env.PORT || 3000
 app.listen port
